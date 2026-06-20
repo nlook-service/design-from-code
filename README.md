@@ -76,6 +76,20 @@ ln -s "$PWD/skills/design-from-code" ~/.codex/skills/design-from-code
 
 Use `cp -r` instead of `ln -s` if you prefer a copy. For a single project only, symlink into that repo's `.claude/skills/` instead of the home directory.
 
+## Updating (already installed?)
+
+There's no build step — updating just means getting the new files in place and starting a fresh session. How depends on how you installed:
+
+| Installed via | How to update |
+|---|---|
+| **Plugin** (Option A) | In Claude Code, open `/plugin`, refresh the `design-from-code` marketplace and update the plugin (or `uninstall` then `install` again). |
+| **Symlink** `ln -s` (Option B) | `git pull` in your clone — the symlink already points at it, so that's the whole update. |
+| **Copy** `cp -r` (Option B) | `git pull`, then re-run the same `cp -r skills/design-from-code <dest>` to overwrite the installed copy. |
+
+Then **start a fresh session** (the host only scans skills at session start) and run `bash verify.sh` to confirm. Check the installed version in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json), and see [`CHANGELOG.md`](CHANGELOG.md) for what changed.
+
+> Your existing `.design/` outputs are safe — they live in your own project repos, not in the skill, so updating never touches them.
+
 ## Verify your install
 
 Three quick levels — run the first one, do the others once.
@@ -225,6 +239,7 @@ design-from-code/
 │   └── images/
 │       └── mobile-bottom-brand-status-v5.png
 ├── verify.sh                    # `bash verify.sh` → checks the install
+├── CHANGELOG.md                 # what changed per version
 ├── README.md
 └── LICENSE
 ```
