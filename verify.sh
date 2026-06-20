@@ -31,6 +31,7 @@ for f in \
   skills/design-from-code/references/code-fidelity-reproduction.md \
   skills/design-from-code/references/data-model-verification.md \
   skills/design-from-code/references/html-mockup-recipe.md \
+  skills/design-from-code/references/artifact-format.md \
   skills/design-from-code/references/prompt-templates.md \
   skills/design-from-code/examples/issue-976-walkthrough.md \
   examples/mobile-bottom-brand-status-v5.html ; do
@@ -42,6 +43,66 @@ echo "Example artifact"
 if [ -f examples/mobile-bottom-brand-status-v5.html ]; then
   n=$(grep -coiE 'src="https?://|<script|href="https?://[^"]*\.css' examples/mobile-bottom-brand-status-v5.html)
   [ "$n" -eq 0 ] && ok "example HTML is self-contained (0 external deps)" || no "example HTML pulls $n external resources"
+fi
+
+# 3b) Output-format fixture (.design/) — proves the artifact format is valid & openable
+echo "Output-format example (.design/)"
+DESIGN_ROOT="examples/.design"
+if [ ! -d "$DESIGN_ROOT" ]; then
+  no "missing example fixture: $DESIGN_ROOT/"
+elif command -v python3 >/dev/null 2>&1; then
+  if python3 - "$DESIGN_ROOT" <<'PY' 2>/dev/null
+import json, os, sys
+root = sys.argv[1]
+errs = []
+
+# index.json
+ip = os.path.join(root, "index.json")
+try:
+    idx = json.load(open(ip))
+    if idx.get("schemaVersion") != 1: errs.append("index.json schemaVersion != 1")
+    if not idx.get("subjects"): errs.append("index.json has no subjects[]")
+    if "events" not in idx: errs.append("index.json missing events[]")
+    for s in idx.get("subjects", []):
+        if not os.path.isdir(os.path.join(root, s.get("slug", ""))):
+            errs.append("index subject points to missing folder: %s" % s.get("slug"))
+except Exception as e:
+    errs.append("index.json invalid: %s" % e)
+
+# each subject meta.json
+subjects = [d for d in os.listdir(root) if os.path.isdir(os.path.join(root, d))]
+if not subjects: errs.append("no subject folders under .design/")
+for slug in subjects:
+    mp = os.path.join(root, slug, "meta.json")
+    if not os.path.isfile(mp):
+        errs.append("%s/meta.json missing" % slug); continue
+    try:
+        m = json.load(open(mp))
+    except Exception as e:
+        errs.append("%s/meta.json invalid: %s" % (slug, e)); continue
+    if m.get("schemaVersion") != 1: errs.append("%s schemaVersion != 1" % slug)
+    for k in ("slug", "title", "status"):
+        if not m.get(k): errs.append("%s meta.json missing '%s'" % (slug, k))
+    if m.get("slug") != slug: errs.append("%s meta.json slug mismatch (%s)" % (slug, m.get("slug")))
+    vers = m.get("versions") or []
+    if not vers: errs.append("%s has no versions[]" % slug)
+    for v in vers:
+        f = v.get("file", "")
+        if not os.path.isfile(os.path.join(root, slug, f)):
+            errs.append("%s version file missing: %s" % (slug, f))
+
+if errs:
+    print("\n".join(errs)); sys.exit(1)
+sys.exit(0)
+PY
+  then
+    ok ".design/ fixture is schema-valid (index + meta + version files)"
+  else
+    no ".design/ fixture failed schema validation (run: python3 with $DESIGN_ROOT)"
+  fi
+else
+  [ -f "$DESIGN_ROOT/index.json" ] && ok ".design/ fixture present (install python3 for schema check)" \
+    || no ".design/index.json missing"
 fi
 
 # 4) Plugin manifests (deep JSON check if python3 exists, else shallow)

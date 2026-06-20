@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-06-21T00:00:00Z",
+  "subjects": [
+    {
+      "slug": "issue-976",
+      "title": "Bottom bar: brand status metrics card",
+      "status": "shipped",
+      "fidelity": "full",
+      "updatedAt": "2026-06-21",
+      "latestVersion": 5,
+      "versionCount": 1
+    }
+  ],
+  "events": [
+    { "ts": "2026-06-21", "slug": "issue-976", "type": "status", "to": "shipped" },
+    { "ts": "2026-06-21", "slug": "issue-976", "type": "version", "v": 5 },
+    { "ts": "2026-06-21", "slug": "issue-976", "type": "created" }
+  ]
+}

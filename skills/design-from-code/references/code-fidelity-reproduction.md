@@ -123,14 +123,27 @@ Map Tailwind classes to CSS of the same meaning. Use the **class → CSS mapping
 - ❌ Making the ＋ button a rounded square → ✅ If the code says `rounded-full`, make it **circular**.
 - ❌ Reordering modules arbitrarily → ✅ Keep the order as it appears in the JSX (Recent posts → This week → metrics → footer).
 - ❌ Dropping conditional UI (e.g., the music-player row) → ✅ Reflect branches like `musicActive &&` in the mockup, at least as a comment.
+- ❌ Glancing at the code and reproducing it "roughly" → ✅ Run the §6 self-check (re-read the source line-by-line) **before** drawing TO-BE.
 
 ---
 
-## 6. (Optional) Verify against a real Playwright capture
+## 6. Fidelity self-check — mandatory before showing TO-BE
 
-Overlaying your source-built mockup **against an actual app screenshot** is the surest validation. But it's heavily environment-dependent.
+The biggest failure mode isn't a wrong method, it's **glancing at the code and reproducing it "roughly."** A rough AS-IS guarantees a wrong TO-BE. So the *build* (STEP 1–5) is not done until it passes a **self-check**. This is not optional — only the screenshot half is.
+
+**Always (source-diff, zero environment needed):** go back to the real render function and confirm the reproduction line-by-line — not from memory, re-read it:
+
+- [ ] Every Tailwind class on the real element is reflected (layout, size ×4px, weight, radius, color).
+- [ ] Labels/icons are the **actual** i18n/constant strings, not approximations.
+- [ ] Every conditional branch (`x && …`, active/empty/loading states) is present, not just the happy path.
+- [ ] Order of elements matches the JSX, not a guess.
+- [ ] Monotone-vs-color matches the code (active = weight, not blue, if that's what the source says).
+
+**When the app can render (preferred verification):** overlay the source-built mockup against a real capture — the surest validation.
 ```bash
-# After booting the dev server, capture the real component in a mobile viewport → pixel-compare against the mockup
+# Boot the dev server, capture the real component in a mobile viewport → compare against the mockup
 ```
-- On this task, Playwright failed entirely — `file://` blocking, frame detached, timeouts — so **source reading alone was sufficient**.
-- In other words, Playwright is **a supplement when available, skippable when not**. Priority #1 is always reading the source.
+- Use the host's ability to run the app (e.g. the `run` skill / Playwright MCP / Storybook) to grab the true rendered AS-IS as the comparison ground truth.
+- But it's **environment-dependent**: on the original task Playwright failed entirely — `file://` blocking, frame detached, timeouts — and source-reading alone was sufficient.
+
+**Priority stays: read the source first.** The screenshot is a *verification supplement when available, skippable when not* — but the **source-diff self-check above is never skipped.** Record how AS-IS was verified in `meta.json` (`asIs`) so the TO-BE's trust level is traceable.

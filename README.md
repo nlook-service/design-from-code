@@ -38,6 +38,8 @@ It also bakes in the things people forget: **one decision at a time**, explicit 
 
 - An 8-step workflow (issue → code map → **data verification** → HTML mockup → confirm → **faithful AS-IS/TO-BE** → design doc → delegated build + verify)
 - Self-contained HTML mockups: phone frames, inline-SVG charts (no chart library), monotone big numbers, keep/new/changed outlines, empty states
+- A **restraint-by-default guardrail** against the generic "AI look" (no emoji-icons, gradient blobs, or rainbow accents) — it matches your product's real tokens or a reference you give, and is fully overridable
+- A portable **[`.design/` output format](skills/design-from-code/references/artifact-format.md)** that persists every mockup with its decisions, verified data meanings, and version history — so designs outlive the session and any viewer can load them
 - Reference guides for each hard part and a fully worked real example
 
 ## Install
@@ -159,13 +161,43 @@ The skill then runs:
 | 1 | Read the issue | `gh issue view` (needs `gh auth login` for GitHub issues) |
 | 2 | Map the code | Explore agents return the relevant components/hooks/schema |
 | 3 | **Verify the data** | Trace handler→query→schema; confirm what each number *actually* means |
-| 4 | HTML mockup v1 | Phone frames, 2–3 options, empty state, inline SVG |
+| 4 | HTML mockup v1 | Phone frames, 2–3 options, empty state, inline SVG — written to `.design/<slug>/` |
 | 5 | Confirm | One decision at a time; bump to v2, v3… per feedback |
 | 6 | **Faithful AS-IS/TO-BE** | Read real JSX, reproduce 1:1, tag keep/new/changed |
 | 7 | Design doc `.md` | Approved mockup + verified data model + build entry points |
 | 8 | Delegate + verify | Hand to a language-expert agent; close with build/type-check/tests |
 
 See [`examples/`](examples/) for a runnable HTML deliverable and [the issue-976 walkthrough](skills/design-from-code/examples/issue-976-walkthrough.md) for the full v1→v5 story (including where the user corrected the layout).
+
+## Output — the `.design/` artifact format
+
+Steps 4–7 don't just chat mockups at you and vanish; they **persist** to a small, tool-agnostic format inside your project, so a design (and *why* it ended up that way) survives the session and can be browsed later.
+
+The point is a clean separation — three things that change at different rates and shouldn't be bundled:
+
+| Layer | What | Where it lives |
+|---|---|---|
+| **Method** | how to design (this skill) | the skill's Markdown — stateless, shareable |
+| **Data** | the mockups + decisions + verified facts | `.design/` in **your** repo — grows over time |
+| **Viewer** | the "spec tool" gallery/timeline UI | a **separate** program that only *reads* `.design/` |
+
+So the skill is the producer; a viewer is built separately and just consumes the format. The reusable asset isn't the UI — it's the **metadata**: what each version changed, which decision was made and why, what each number actually counts. That's also what the AI re-reads as grounded context for the next design.
+
+```
+.design/
+  index.json                  # DERIVED rollup + global timeline (generated, never hand-edited)
+  issue-976/
+    meta.json                 # the contract: status, versions[], decisions[], dataModel[]
+    design.md                 # the Step-7 design doc
+    v1.html … v5.html         # every iteration, self-contained
+    v5.png                    # optional thumbnail for the viewer
+```
+
+**Two layers of time:** per-subject (`meta.json.versions[]`, the v1→vN history) and global (`index.json.events[]`, one activity feed across all subjects — `created` / `version` / `status` / `shipped`). `index.json` is **derived** by scanning every `meta.json`, so it can't drift.
+
+Full schema, field reference, producer rules, and the viewer consumer contract: **[`references/artifact-format.md`](skills/design-from-code/references/artifact-format.md)**. Any other skill or tool can adopt `.design/` by writing a conforming `meta.json` — that's the federation point.
+
+A **runnable, schema-valid example** lives at [`examples/.design/`](examples/.design/) and is checked by `verify.sh`, so the format always has a working reference that can't silently drift from the spec.
 
 ## Repository layout
 
@@ -181,11 +213,15 @@ design-from-code/
 │       │   ├── code-fidelity-reproduction.md   # ★ read JSX → reproduce HTML 1:1
 │       │   ├── data-model-verification.md
 │       │   ├── html-mockup-recipe.md
+│       │   ├── artifact-format.md              # the .design/ output format (schema + index/timeline)
 │       │   └── prompt-templates.md
 │       └── examples/
 │           └── issue-976-walkthrough.md
 ├── examples/
 │   ├── mobile-bottom-brand-status-v5.html   # open in a browser
+│   ├── .design/                             # conforming .design/ fixture (validated by verify.sh)
+│   │   ├── index.json                       # derived rollup + timeline
+│   │   └── issue-976/{meta.json, v5.html}   # one design subject
 │   └── images/
 │       └── mobile-bottom-brand-status-v5.png
 ├── verify.sh                    # `bash verify.sh` → checks the install

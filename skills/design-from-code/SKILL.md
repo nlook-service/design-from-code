@@ -23,13 +23,14 @@ description: Workflow skill that turns one issue/requirement into a design in th
 ## Core principles (these override every other decision)
 
 1. **No guessing — read the code.** "How does this stat work?" is wrong ~100% of the time if you imagine it. Trace handler→query→schema all the way down, confirm it as *fact*, then design. → `references/data-model-verification.md`
-2. **Reproduce the real component faithfully.** Before any new mockup, draw the **current state (AS-IS) exactly as the real JSX renders it**. Schematic drawings cause misunderstandings. → `references/code-fidelity-reproduction.md` (★ the heart of this skill)
+2. **Reproduce the real component faithfully.** Before any new mockup, draw the **current state (AS-IS) exactly as the real JSX renders it**. Schematic drawings cause misunderstandings. **Don't reproduce from a glance** — a rough AS-IS guarantees a wrong TO-BE; confirm it with the fidelity self-check before moving on. → `references/code-fidelity-reproduction.md` (★ the heart of this skill)
 3. **Pictures over prose.** Iterate with self-contained HTML you can see and fix. Bump the version (v2, v3…) on every round of feedback. → `references/html-mockup-recipe.md`
 4. **Confirm one decision at a time.** "A vs B?" → "7-day window?" → "monotone color?" — ask narrowly.
 5. **Mark keep / new / changed.** When "leave the rest as-is" is a requirement, use 🟦keep / 🟩new / 🟨changed color tags to show what you are *not* touching.
 6. **Empty / initial state is first-class.** Always design the data-zero (new user) screen alongside the populated one.
 7. **Delegate the build, but verification is mandatory.** Close it out with build / type-check / tests.
 8. **Check for source before promising fidelity.** First confirm enough real code exists to read (Step 0). If it doesn't, say so and downgrade to a clearly-labeled proposal — don't pretend to reproduce something that isn't there.
+9. **Ground the look — don't default to AI decoration.** What's firm: never invent a generic AI aesthetic. Anchor every mockup to something real — the product's actual tokens/components (you already read them), a reference the user gives, or a named style — and if a *new* look is wanted but no reference exists, **ask for one** rather than inventing it. With nothing supplied, fall back to the restraint guardrail (no emoji-icons, no gradient blobs, one semantic accent, hierarchy from scale not decoration). The *specific aesthetic* is the user's to direct and override; what doesn't bend is that it's grounded, not guessed. Record the choice in `meta.json.direction`. → `references/html-mockup-recipe.md` §0
 
 ## The 8-step workflow
 
@@ -46,14 +47,23 @@ description: Workflow skill that turns one issue/requirement into a design in th
 | 1 | Read the issue verbatim | `Bash` + `gh issue view` | Don't open GitHub via WebFetch (auth fails) |
 | 2 | Map the code | `Agent(Explore)` ×N | Get just the conclusions for related components/hooks/schema |
 | 3 | **Verify the data** | `Bash` (grep/sed) + Explore | handler→use-case→repository→schema. `references/data-model-verification.md` |
-| 4 | HTML mockup v1 | `Write` (.html) + `SendUserFile` | Phone frame, 2–3 options, per-state, inline SVG. `references/html-mockup-recipe.md` |
-| 5 | User confirmation | reply / `AskUserQuestion` | Confirm one at a time; v2, v3 per feedback |
-| 6 | **Faithful AS-IS/TO-BE** | `Bash` (read JSX with sed) + `Write` | Extract real render fns/classes/labels → HTML. `references/code-fidelity-reproduction.md` |
-| 7 | Design doc `.md` | `Write` | Approved mockup + verified data model + build entry points + phases |
+| 4 | HTML mockup v1 | `Write` (.html) + `SendUserFile` | Write to `.design/<slug>/v1.html` + create `meta.json`. Phone frame, 2–3 options, per-state, inline SVG. `references/html-mockup-recipe.md`, `references/artifact-format.md` |
+| 5 | User confirmation | reply / `AskUserQuestion` | Confirm one at a time; add `vN.html` + a `versions[]` entry per round |
+| 6 | **Faithful AS-IS/TO-BE** | `Bash` (read JSX with sed) + `Write` | Extract real render fns/classes/labels → HTML in the same folder. **Run the fidelity self-check before TO-BE** (re-diff vs source always; screenshot-compare when the app can render). `references/code-fidelity-reproduction.md` |
+| 7 | Design doc `.md` | `Write` | `.design/<slug>/design.md` + set `status`/`build` in `meta.json`. Approved mockup + verified data model + build entry points + phases |
 | 8 | Delegate + verify | `Agent` (language expert) + direct | Delegate with the contract & verify commands baked in; close with build/tests |
+
+## Output contract — persist to `.design/`
+
+Every mockup and its planning history is written to a portable, tool-agnostic format so the design *outlives the
+session* and any viewer can render it. Don't keep artifacts only in chat: write each version to
+`.design/<slug>/vN.html`, and record the decisions, verified data meanings, and version history in `meta.json`.
+This is the federation point — the skill produces the format; a separate **viewer/spec tool reads it** (gallery +
+timeline). Full spec, schema, and index/timeline model: → `references/artifact-format.md`.
 
 ## Reference files
 
+- `references/artifact-format.md` — **the `.design/` output format**: `meta.json` schema, derived `index.json`, and the two-layer timeline (per-version + global). The contract between this skill, other producers, and any viewer.
 - `references/code-fidelity-reproduction.md` — **★ concrete technique for reading the real component with sed and reproducing it 1:1 in HTML** (worked `renderSeg` example)
 - `references/data-model-verification.md` — how to trace the data model all the way down (events-table username-attribution example)
 - `references/html-mockup-recipe.md` — recipe for self-contained HTML (phone frame, inline-SVG charts, design tokens, empty state)
@@ -69,3 +79,4 @@ description: Workflow skill that turns one issue/requirement into a design in th
 - [ ] Forgot the empty / initial state (data-zero) → did you include the empty-state design?
 - [ ] Pulled in a chart library for the graph → did you use inline SVG instead?
 - [ ] Skipped build/type-check after implementing → did you close it out with verification commands?
+- [ ] Mockup looks **AI-generic** (emoji-icons, gradient blobs, icon soup, rainbow accents) → did you match real product tokens / a reference, or fall back to the restraint guardrail and record `direction`?

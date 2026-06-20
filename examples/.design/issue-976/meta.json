@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "slug": "issue-976",
+  "title": "Bottom bar: brand status metrics card",
+  "source": {
+    "type": "issue",
+    "ref": "976",
+    "url": "https://github.com/nlook-service/design-from-code/issues/976"
+  },
+  "status": "shipped",
+  "fidelity": "full",
+  "createdAt": "2026-06-21",
+  "updatedAt": "2026-06-21",
+  "tags": ["mobile", "bottom-bar", "dashboard"],
+
+  "direction": {
+    "source": "product-tokens",
+    "note": "Reuse themes.css tokens + the existing MobileBottomBar component set; monotone, active = weight not color.",
+    "references": []
+  },
+
+  "asIs": {
+    "verified": "source-diff",
+    "selfChecked": true,
+    "component": "app/src/components/mobile/MobileBottomBar.tsx"
+  },
+
+  "versions": [
+    {
+      "v": 5,
+      "file": "v5.html",
+      "date": "2026-06-21",
+      "summary": "Final: faithful AS-IS / TO-BE (green = new, yellow = changed) plus the data-zero empty state, monotone.",
+      "decisions": ["card sits above the existing nav, inside the sheet — current nav untouched"]
+    }
+  ],
+
+  "decisions": [
+    { "q": "Where does the metrics card sit?", "choice": "above the existing nav, inside the sheet", "why": "keeps the current bottom nav untouched (the keep-requirement)" },
+    { "q": "Color or monotone numbers?", "choice": "monotone — size/weight for emphasis", "why": "matches the real component: active = font-bold text-foreground, not blue" },
+    { "q": "Time window for the stats?", "choice": "this week (7 days)" }
+  ],
+
+  "dataModel": [
+    { "field": "posts", "means": "count of documents authored by the user", "source": "handler → use-case → repository → schema (confirmed in code, not guessed)" },
+    { "field": "visitors", "means": "distinct readers in the last 7 days", "source": "verified against the events-table attribution path" },
+    { "field": "likes", "means": "cumulative likes across the user's documents" }
+  ],
+
+  "build": {
+    "entryPoints": ["app/src/components/mobile/MobileBottomBar.tsx"],
+    "verify": ["pnpm build", "pnpm type-check", "pnpm test"]
+  }
+}

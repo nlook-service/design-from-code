@@ -4,6 +4,27 @@
 
 ---
 
+## 0. Visual direction — match the product, not AI defaults (do this first)
+
+The mockup should look like *this product*, not like generic AI output. Decide the direction before writing any HTML, and record it in `meta.json` (`direction`) so it persists and the AI reuses it next time.
+
+**Reference hierarchy — use the strongest one available:**
+1. **The real product's tokens & components** (primary). You already read them in code-mapping — reuse the actual `themes.css` values, spacing scale, and existing icon/component set. This alone kills most of the "AI look."
+2. **A reference the user gives** — a screenshot or URL of the look they want, or their design system. Match it; don't reinterpret it.
+3. **A named style direction** — concrete enough to constrain (editorial · Swiss · neo-brutalism · bento · dark-luxury). "Clean/minimal" is too vague.
+4. **None given → restraint guardrail below.** And, when a *new* look is clearly wanted but no reference exists, **ask for one** instead of inventing decoration.
+
+**Restraint guardrail (the default floor — applies whenever no stronger direction is set):**
+- No emoji as icons; no icon next to every label — an icon must earn its place.
+- No gradient blobs / glowing orbs / rainbow accents. **One** accent color, used semantically (primary action), not decoratively.
+- Hierarchy comes from **scale & spacing**, not shadows-everywhere or uniform card grids.
+- Restrained radius/shadow; reuse the product's, don't escalate them.
+- Realistic copy and numbers — no lorem-ipsum, no implausibly precise fake metrics.
+
+> **This is a default, not a lock.** If the user asks for something playful, icon-heavy, or hands you a reference, follow it — override freely. The guardrail only governs the *unspecified* case, to stop the model falling back to its own AI-ish defaults.
+
+---
+
 ## 1. Skeleton (copy-paste starting point)
 
 ```html
