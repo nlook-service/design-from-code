@@ -103,6 +103,39 @@ You should see it (a) read the real component, (b) ask one narrow question, and 
 
 > The example artifact is pre-rendered, so you can sanity-check the *output shape* before installing: open [`examples/mobile-bottom-brand-status-v5.html`](examples/mobile-bottom-brand-status-v5.html) in any browser.
 
+## How loading works (you probably don't need to "load" anything)
+
+After install you don't import or enable the skill anywhere. There are exactly two ways it fires — and the everyday one needs no command at all.
+
+| | How you trigger it | When to use |
+|---|---|---|
+| **Automatic** (default) | Just describe the task in plain language: *"Design how this card should look — mockup first."* | Almost always. This is the intended path. |
+| **Explicit** | Type `/design-from-code` (Claude Code) or pick it from the skill list (Codex) | When you want to force it, or auto-matching didn't catch an unusual phrasing |
+
+Either way, **start a fresh session after installing** — the host only scans skills at session start.
+
+### What happens under the hood
+
+You don't keyword-match; the model does an *intent* match. Here is the actual mechanism, so the behavior isn't a black box:
+
+1. **At session start**, Claude Code / Codex loads only the **frontmatter** of every installed skill — its `name` and `description` — into context. The full `SKILL.md` body and the `references/` files are **not** loaded yet (that keeps your context cheap).
+2. **On each message**, the model compares what you asked against those `description` lines and decides whether one matches.
+3. **On a match**, it loads that skill's full body and starts following the workflow. Only then does it read the reference guides it needs.
+
+So the **`description:` field in [`skills/design-from-code/SKILL.md`](skills/design-from-code/SKILL.md) is the entire trigger surface.** The phrases listed there — `(EN) "design this", "make a mockup"…` / `(KO) "설계해줘", "시안 만들어줘"…` — are *examples that bias the match*, not a fixed keyword list it checks literally.
+
+### Languages — what you do and don't do
+
+**You do nothing per language. One install covers every language.** There is no separate Korean build, no locale flag, no config.
+
+| | Behavior | Why |
+|---|---|---|
+| **English & Korean** | Trigger most reliably | Their phrases are written into the `description`, so the match is strongest |
+| **Other languages** (Japanese, Chinese, Spanish, …) | Still work | Matching is **semantic**, not literal — *「このカードにラベルを追加する設計をして」* maps to the same intent even though it isn't listed |
+| **Any language, edge phrasing** | Use `/design-from-code` | The explicit command bypasses matching entirely and always works |
+
+If you want another language to fire as reliably as EN/KO, add a few of its trigger phrases to the **single `description:` line** in `skills/design-from-code/SKILL.md` (keep it one line), then re-run `bash verify.sh` and restart the session. Nothing else changes — the workflow body itself is language-agnostic and the model replies in whatever language you wrote in.
+
 ## Usage
 
 Trigger it with any UI-design request that touches existing code:
@@ -180,6 +213,35 @@ This skill's superpower is reading **real source and real data**. The author's c
 | **Codex instead of Claude Code** | Steps map cleanly: `Agent(Explore)` → a sub-agent, `SendUserFile` → file output | Tool names differ; the method is tool-agnostic |
 
 Rule of thumb: **the more real code and data you have, the better the output.** With neither, it still helps you think, but it can't reproduce what doesn't exist — and it won't pretend to.
+
+### What if there's no code to read at all?
+
+The skill's headline move — "reproduce the real component, verify the real data" — needs source to read. So before anything else it runs a **Step 0 gate: is there enough real code to read?** It locates the target component and its data path, then picks a branch and *tells you which one* up front. So what happens when there's **none**? (Brand-new product, empty repo, pure idea, or you just don't have the code handy.) It doesn't fail and it doesn't hallucinate a fake "current screen." It **drops the steps that need source and keeps the rest:**
+
+| What's missing | What the skill skips | What it still does |
+|---|---|---|
+| **No existing component** (greenfield screen) | Step 6 — faithful AS-IS reproduction (there is no AS-IS) | Steps 4–5: fresh HTML mockups, 2–3 options, empty + populated states, one-decision-at-a-time |
+| **No data layer / schema yet** | Step 3's *trace to a schema column* | Asks you to **define** what each number should mean, and writes that down as the spec instead of verifying it |
+| **No repo open at all** (designing from a description) | Step 1–2 code mapping | Treats your prose as the brief and goes straight to mockups; the design doc records assumptions **as assumptions**, flagged for you to confirm |
+
+The important guarantee: when it can't read a fact, it **does not invent one silently.** It will say *"this is an assumption, confirm it"* rather than draw a screen that looks authoritative but is guessed. The output degrades from *"reproduced from real source"* to *"a clearly-labeled proposal"* — which is still a self-contained HTML mockup you can open, react to, and iterate.
+
+If you *do* have code but it just isn't in this repo, point the skill at it (open that project, or paste the relevant component/query) and it switches back to full-fidelity mode. The line that decides output quality is simply: **how much real source it was allowed to read.**
+
+### Is this only for redesigning what I already have? Where does *new* design come from?
+
+Worth being blunt about the scope, because it's easy to expect the wrong thing. This skill answers **"does this match the real component and the real data?"** — fidelity and truth. It does **not** answer **"what should this look like?"** — aesthetic direction, style, novelty. Code doesn't contain "how it should *feel*," so the skill won't invent a visual direction out of nothing, and won't pretend to.
+
+That means:
+
+- **Changing something inside an existing design** → design-from-code is strong on its own. The surrounding screen *is* the reference.
+- **A genuinely new look** → you supply the **direction as input first**, then hand it to this skill to ground and ship. Sources, cheapest first:
+  1. **Real references** — screenshots or sites of products you want it to feel like. Point at them or paste them. (Strongest signal.)
+  2. **A named style direction** — something concrete enough to constrain choices: *editorial · Swiss · neo-brutalism · glassmorphism · bento · dark-luxury*. "Clean and minimal" is too vague to be a direction.
+  3. **Your own design system / tokens**, if you have them — that *is* your reference.
+  4. **A dedicated design-ideation skill** to diverge on options (e.g. a `frontend-design` / UI-mockup skill), then bring the chosen direction back here.
+
+**Mental model — diverge, then converge.** References and ideation skills *diverge* ("what could it look like?"). design-from-code *converges* ("pin it to real data, reproduce faithfully, lock the doc, delegate the build"). It's the second half of the pipeline, not the first — pair it with a source of visual direction and you get both novelty *and* fidelity.
 
 ## About nlook
 

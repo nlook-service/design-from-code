@@ -29,11 +29,20 @@ description: Workflow skill that turns one issue/requirement into a design in th
 5. **Mark keep / new / changed.** When "leave the rest as-is" is a requirement, use 🟦keep / 🟩new / 🟨changed color tags to show what you are *not* touching.
 6. **Empty / initial state is first-class.** Always design the data-zero (new user) screen alongside the populated one.
 7. **Delegate the build, but verification is mandatory.** Close it out with build / type-check / tests.
+8. **Check for source before promising fidelity.** First confirm enough real code exists to read (Step 0). If it doesn't, say so and downgrade to a clearly-labeled proposal — don't pretend to reproduce something that isn't there.
 
 ## The 8-step workflow
 
+> **Step 0 (gate) — does enough real source exist?** Before committing to full-fidelity mode, check that the code this design touches is actually readable. Locate the target component/screen and its data path (handler → query → schema). Then branch:
+> - **Sufficient source found** → run all 8 steps as written (reproduce AS-IS, verify data to the schema).
+> - **Partial** (component exists, data path is a black-box API / not yet built) → reproduce what you *can* read; for the rest, state it as an **assumption to confirm**, never as verified fact.
+> - **None** (greenfield / empty repo / idea-only) → skip Steps 2–3 and 6 (nothing to map, verify, or reproduce); go straight to fresh mockups (4–5) and record every data meaning as a **defined-here spec**, flagged for the user to confirm.
+>
+> Announce which branch you're on in one line ("No existing component for this — designing fresh, assumptions flagged") so the user knows the output's fidelity up front. Never fabricate a fake "current screen" to fill the gap.
+
 | # | Step | Key tools | Detail |
 |---|------|-----------|--------|
+| 0 | **Source-availability check** | `Agent(Explore)` / `Bash` (grep) | Confirm the target code + data path are readable; pick the branch above |
 | 1 | Read the issue verbatim | `Bash` + `gh issue view` | Don't open GitHub via WebFetch (auth fails) |
 | 2 | Map the code | `Agent(Explore)` ×N | Get just the conclusions for related components/hooks/schema |
 | 3 | **Verify the data** | `Bash` (grep/sed) + Explore | handler→use-case→repository→schema. `references/data-model-verification.md` |
