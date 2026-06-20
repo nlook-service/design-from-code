@@ -118,11 +118,18 @@ Either way, **start a fresh session after installing** — the host only scans s
 
 You don't keyword-match; the model does an *intent* match. Here is the actual mechanism, so the behavior isn't a black box:
 
-1. **At session start**, Claude Code / Codex loads only the **frontmatter** of every installed skill — its `name` and `description` — into context. The full `SKILL.md` body and the `references/` files are **not** loaded yet (that keeps your context cheap).
-2. **On each message**, the model compares what you asked against those `description` lines and decides whether one matches.
-3. **On a match**, it loads that skill's full body and starts following the workflow. Only then does it read the reference guides it needs.
+1. **At session start** — Claude Code / Codex loads only the **frontmatter** of every installed skill (its `name` and `description`) into context. The full `SKILL.md` body and the `references/` files are **not** loaded yet, which keeps your context cheap.
+2. **On each message** — the model compares what you asked against those `description` lines and decides whether one matches.
+3. **On a match** — it loads that skill's full body and starts the workflow. Only then does it read the reference guides it needs.
 
-So the **`description:` field in [`skills/design-from-code/SKILL.md`](skills/design-from-code/SKILL.md) is the entire trigger surface.** The phrases listed there — `(EN) "design this", "make a mockup"…` / `(KO) "설계해줘", "시안 만들어줘"…` — are *examples that bias the match*, not a fixed keyword list it checks literally.
+So the **`description:` field in [`skills/design-from-code/SKILL.md`](skills/design-from-code/SKILL.md) is the entire trigger surface.** The phrases written there are *examples that bias the match* — not a fixed keyword list the model checks literally:
+
+| Language | Example trigger phrases |
+|---|---|
+| 🇬🇧 **English** | "design this" · "make a mockup" · "how should this feature look" · "add ~ to the existing screen" |
+| 🇰🇷 **Korean** | "설계해줘" · "시안 만들어줘" · "이 기능 어떻게 보여줄지" · "기존 화면에 ~ 추가" |
+
+Anything close in *meaning* to these will trigger it — you don't have to say them word-for-word. To see or extend the list, open the `description:` line in `SKILL.md`.
 
 ### Languages — what you do and don't do
 
