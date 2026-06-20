@@ -1,56 +1,56 @@
-# 워크드 예시 — 이슈 #976 (모바일 하단 브랜드 현황)
+# Worked Example — Issue #976 (Mobile Bottom Brand Status)
 
-> 이 스킬을 실제로 적용한 전체 흐름. 시안이 v1→v5까지 간 이유와, 사용자가 정정한 지점까지 그대로 기록.
+> The complete flow of applying this skill to a real issue. Recorded as-is, including why the mockup went from v1 through v5 and the exact points where the user corrected course.
 
-## 요구 (이슈 원문)
-> "모바일 하단에는 잘 안 보이는 내용 보다는 심리적으로 어필할 수 있는 정보(숫자)를 크게. 포스팅 발행·방문자수·좋아요. 그래프 주간 그래프로 변화율. 브랜딩 요소를 넣는다."
+## Requirement (Issue, original text)
+> "On the mobile bottom, instead of content that's hard to see, show information (numbers) that appeal psychologically, and make them big. Posts published, visitors, likes. A weekly graph showing the rate of change. Add a branding element."
 
-대상 = 하단 시트 `MobileBrandStudioBar`.
+Target = the bottom sheet `MobileBottomBar`.
 
 ---
 
-## STEP별 적용
+## Application, Step by Step
 
-### [1] 이슈 읽기
-`gh issue view 976 ...` → 의도 재진술: "하단바에 큰 숫자(발행·방문자·좋아요)+주간 변화율 그래프+브랜딩".
+### [1] Read the issue
+`gh issue view 976 ...` → restated intent: "Big numbers in the bottom bar (published / visitors / likes) + a weekly rate-of-change graph + branding."
 
-### [2] 코드 지도화 (Explore ×1)
-→ peek=네비 아이콘+＋FAB, full=보조메뉴·최근글·캘린더·브랜드지표(맨 아래 3타일)·푸터. 재사용 컴포넌트 `Sparkline.tsx` 발견. 데이터 `fetchAnalyticsSummary` (현재 days=1).
+### [2] Map the code (Explore ×1)
+→ peek = nav icons + the ＋ FAB; full = secondary menu, recent posts, calendar, brand metrics (the bottom 3 tiles), and footer. Found the reusable component `Sparkline.tsx`. Data comes from `fetchSummary` (currently days=1).
 
-### [3] 데이터 검증 (직접 sed + Explore)
-핸들러→유즈케이스→리포지토리→스키마 추적. **확정 사실**:
-- `analytics_event`에 author_id 없음 → **`username` 문자열 귀속**.
+### [3] Verify the data (direct sed + Explore)
+Traced handler → use case → repository → schema. **Confirmed facts**:
+- `events` has no author_id → **attribution is by the `username` string**.
 - `WHERE username=$1 AND device_type<>'bot' AND is_self=false`.
-- `doc` 없으면 **홈 + 모든 글 합산**. `daily[]` 시계열 존재.
-- 좋아요는 `project_likes`에만 있고 집계 API 없음 → **신규 엔드포인트 필요**.
-- 좋아요 일별 시계열 없음 → 그래프 탭 비활성 결정.
-→ 이 검증으로 "방문자가 홈+글 모두 포함이냐?"는 사용자 질문에 **코드 근거로** 답함.
+- If there's no `doc`, it's **the home page plus all posts, summed**. A `daily[]` time series exists.
+- Likes live only in `likes` and there's no aggregation API → **a new endpoint is needed**.
+- There's no per-day time series for likes → decided to disable the graph tab.
+→ This verification let us answer the user's question "Do visitors include both home and posts?" **with evidence from the code**.
 
-### [4]~[6] HTML 시안 반복 (v1→v5) — ★사용자 피드백이 방향을 잡음
-| 버전 | 변화 | 트리거 |
-|------|------|--------|
-| v1 | A안(히어로)·B안(3숫자) 2안 비교 | 첫 제시 |
-| v2 | B안 확정 + 데이터모델 패널 + **빈 상태** 추가 | "B안 좋아요 / 방문자 아직 없음" |
-| v3 | AS-IS vs TO-BE 도입 (유지/신규/변경 태그) | "현재 바 기반 기존+신규 합쳐 재제안" |
-| v4 | **실제 JSX 정독**해 충실 재현(renderSeg·＋FAB 원형·5칸 그리드·날짜 캘린더) | "좀더 정확히" |
-| v5 | **메뉴 상단 고정 / 현황은 메뉴 아래**로 정정 | "메뉴는 하단바라 가장 위, 그 아래에 제안" |
+### [4]–[6] HTML mockup iterations (v1→v5) — ★user feedback drove the direction
+| Version | Change | Trigger |
+|---------|--------|---------|
+| v1 | Compared two options: option A (hero) and option B (3 numbers) | First presentation |
+| v2 | Locked in option B + data-model panel + added an **empty state** | "Like option B / visitors not available yet" |
+| v3 | Introduced AS-IS vs TO-BE (keep / new / changed tags) | "Re-propose by combining existing + new on top of the current bar" |
+| v4 | **Read the actual JSX** to reproduce faithfully (renderSeg, the ＋ FAB circle, the 5-cell grid, the date calendar) | "More accurate, please" |
+| v5 | Corrected to **pin the menu at the top / status below the menu** | "The menu is the bottom bar, so it goes at the very top, with the proposal below it" |
 
-→ **교훈**: v4에서 코드 충실 재현(§code-fidelity)으로 정확도가 급상승했고, v5에서 사용자가 위/아래 배치를 정정함. 한 번에 하나씩 좁게 확정한 덕에 빠르게 수렴.
+→ **Lesson**: faithful code reproduction in v4 (§code-fidelity) sharply raised accuracy, and in v5 the user corrected the top/bottom placement. Because we locked things down narrowly, one at a time, it converged fast.
 
-### [7] 설계문서
-`docs/02-design/issue-976-mobile-bottom-brand-status-design.md` — v5 확정 + 검증 데이터모델 + 구현 착수점 + P1/P2/P3.
+### [7] Design document
+`docs/02-design/issue-976-mobile-bottom-brand-status-design.md` — the locked-in v5 + the verified data model + implementation starting points + P1/P2/P3.
 
-### [8] 구현 + 검증
-- 백엔드(go-entgo-specialist 위임): `GET /analytics/likes-summary?days=N` → `{total,current,previous}`. go build + 33 테스트 PASS.
-- 프론트(직접): days=1→14, 좋아요 쿼리, 현황 카드(본문 첫 자식·빈 상태), 기존 지표모듈 흡수. build0·net-new tsc0.
-- 메뉴·기존 모듈 무수정.
+### [8] Implementation + verification
+- Backend (delegated to a backend specialist): `GET /<resource>/likes-summary?days=N` → `{total,current,previous}`. go build + 33 tests PASS.
+- Frontend (done directly): days=1→14, the likes query, the status card (first child of the body, empty state), absorbing the existing metrics module. build 0 errors, net-new tsc 0 errors.
+- Menu and existing modules left untouched.
 
 ---
 
-## 이 사례에서 건진 메타 교훈
+## Meta Lessons Taken From This Case
 
-1. **데이터 검증이 사용자 신뢰를 만든다.** "방문자가 홈+글 다 포함이냐"를 코드로 답하니 설계가 막힘없이 진행됨.
-2. **충실 재현이 시안 정확도의 핵심.** v3(스키매틱)→v4(코드 재현)에서 "정확하다"는 반응이 나옴.
-3. **배치 같은 공간 제약은 말로 어긋난다.** 다이어그램 + 1개씩 확정으로 v5에서 정정.
-4. **빈 상태는 처음부터.** 실제 방문자 0이라, 빈 상태가 오히려 1순위 화면이었음.
-5. **Playwright는 보조.** 환경 문제로 전부 실패했지만 소스 정독만으로 충분했다.
+1. **Data verification builds user trust.** Answering "Do visitors include both home and posts?" from the code let the design proceed without snags.
+2. **Faithful reproduction is the key to mockup accuracy.** The "this is accurate" reaction came at v3 (schematic) → v4 (code reproduction).
+3. **Spatial constraints like placement get lost in words.** A diagram + locking things down one at a time fixed it by v5.
+4. **Empty states from the start.** With real visitors at 0, the empty state was actually the top-priority screen.
+5. **Playwright is a supporting tool.** It all failed due to environment issues, but reading the source carefully was enough.

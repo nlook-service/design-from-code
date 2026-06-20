@@ -1,86 +1,86 @@
-# 데이터 모델 끝까지 검증하는 법 (Data-Model Verification)
+# Data-Model Verification
 
-> "이 숫자가 정확히 무엇을 세는가?"를 **코드로** 확정한다. 추측으로 설계하면 100% 틀린다.
-> 화면에 통계/숫자를 노출하는 설계라면, 시안을 그리기 *전에* 이 단계를 끝낸다.
-
----
-
-## 1. 추적 경로 (백엔드 기준)
-
-```
-라우터 등록  →  핸들러(인증·스코프 도출)  →  유즈케이스(필터)  →  리포지토리(WHERE 절)  →  스키마(컬럼·귀속)
-```
-
-각 단계에서 읽을 것:
-- **라우터**: 엔드포인트 경로·메서드·인증 미들웨어.
-- **핸들러**: 누구로 스코프하나? (userID? 토큰?) 어떤 파라미터(days, doc)?
-- **유즈케이스**: 무엇으로 필터하나? userID→username 변환 등.
-- **리포지토리**: 실제 SQL `WHERE` 절. **무엇을 포함/제외**하나.
-- **스키마**: 그 통계가 *누구 콘텐츠*에 귀속되나? (author_id? username? doc_uuid?)
+> Confirm "exactly what does this number count?" **in code**. Designing on guesswork is 100% wrong.
+> If the design surfaces stats/numbers on screen, finish this step *before* drawing any mockup.
 
 ---
 
-## 2. 실전 명령
+## 1. Trace Path (backend-first)
+
+```
+router registration  →  handler (auth · scope derivation)  →  use case (filters)  →  repository (WHERE clause)  →  schema (columns · attribution)
+```
+
+What to read at each step:
+- **Router**: endpoint path · method · auth middleware.
+- **Handler**: Who is it scoped to? (userID? token?) Which parameters (days, doc)?
+- **Use case**: What does it filter by? userID→username conversion, etc.
+- **Repository**: the actual SQL `WHERE` clause. **What it includes/excludes**.
+- **Schema**: Whose *content* is this stat attributed to? (author_id? username? doc_uuid?)
+
+---
+
+## 2. Practical Commands
 
 ```bash
-# 엔드포인트 등록 위치
-grep -rn "analytics/summary\|/analytics" server/internal --include="*.go" | grep -iE "Get|Post|route"
+# Where the endpoint is registered
+grep -rn "<resource>/summary\|/<resource>" server/internal --include="*.go" | grep -iE "Get|Post|route"
 
-# 핸들러 정독 (인증·스코프)
-sed -n '1,60p' server/internal/analytics/handler/summary_handler.go
+# Read the handler closely (auth · scope)
+sed -n '1,60p' server/internal/<feature>/handler/summary_handler.go
 
-# 유즈케이스 (필터 도출)
-sed -n '1,60p' server/internal/analytics/usecase/summary.go
+# Use case (filter derivation)
+sed -n '1,60p' server/internal/<feature>/usecase/summary.go
 
-# 리포지토리 WHERE 절 (핵심)
+# Repository WHERE clause (the crux)
 grep -nE "WHERE|Username|device_type|is_self|COUNT|GROUP BY" \
-  server/internal/analytics/repository/analytics_query_repository.go
+  server/internal/<feature>/repository/query_repository.go
 
-# 스키마 (귀속 컬럼)
-sed -n '1,80p' server/entgo/schema/analytics_event.go
+# Schema (attribution columns)
+sed -n '1,80p' server/<orm>/schema/event.go
 ```
 
-병렬 조사가 필요하면 `Agent(subagent_type: Explore)`에게 "끝까지 추적하라" 프롬프트(→ `prompt-templates.md`)로 위임.
+If parallel investigation is needed, delegate to `Agent(subagent_type: Explore)` with a "trace it end to end" prompt (→ `prompt-templates.md`).
 
 ---
 
-## 3. 반드시 한 줄로 확정할 질문
+## 3. Questions You Must Settle in One Line
 
-| 질문 | 이번 사례 답(예) |
+| Question | Example answer (this case) |
 |------|------------------|
-| 누구 기준 스코프? | `WHERE username=$1` — 소유자 핸들 (author_id 없음, username 문자열 귀속) |
-| 무엇을 포함/제외? | `device_type<>'bot'` (봇 제외) + `is_self=false` (본인 제외) |
-| 무슨 범위를 합치나? | `doc` 없으면 **홈(/@user) + 모든 글(/@user/post) 합산** |
-| 시계열/변화율 데이터 있나? | `daily[]`(일별 visitors) 있음 → days=14로 받아 최근7/이전7 분할 |
-| 고유 vs 연인원? | `unique_visitors = COUNT(DISTINCT visitor_id)` |
+| Scoped by whom? | `WHERE username=$1` — the owner's handle (no author_id; attributed by username string) |
+| What's included/excluded? | `device_type<>'bot'` (excludes bots) + `is_self=false` (excludes the owner) |
+| What range is summed? | If no `doc`, **sum the home (/@handle) + all posts (/@handle/<slug>)** |
+| Is there time-series / rate-of-change data? | `daily[]` (visitors per day) exists → fetch with days=14, split into last 7 / previous 7 |
+| Unique vs. cumulative? | `unique_visitors = COUNT(DISTINCT visitor_id)` |
 
-→ **확정 산출물(한 줄)**: "방문자 = 내 공개표면 전체 고유 방문자, 봇·본인 제외, 홈+모든 글 합산."
-
----
-
-## 4. "데이터가 없어 보임" 진단
-
-숫자가 0으로 보일 때, **추적 누락인지 실제 데이터 없음인지** 구분:
-- 비콘 발화 조건 확인(동의 게이트 `isAnalyticsAllowed()` 등) — 미동의면 미수집.
-- 엔드포인트가 커밋/배포됐는지(`git log -- <파일>`).
-- 실제로 유입이 없는지(신규 사용자) — 이 경우 **빈 상태 디자인**으로 해결(추적 문제 아님).
+→ **Settled output (one line)**: "Visitors = unique visitors across my entire public surface, excluding bots and the owner, summing home + all posts."
 
 ---
 
-## 5. 시계열·변화율을 "없는 데이터로 지어내지 마라"
+## 4. Diagnosing "Looks Like There's No Data"
 
-- 어떤 지표는 일별 시계열이 있고(방문자 `daily[]`), 어떤 건 없다(좋아요).
-- 시계열이 없는 지표는 **그래프 탭을 비활성**하거나 "합계+변화"만 노출한다. **가짜 평탄 그래프 금지**(정직성).
-- 변화율 = 이번 기간 합 vs 직전 동일기간 합. 데이터가 한쪽뿐이면 변화율 생략.
+When a number shows 0, distinguish **a tracing gap from genuinely absent data**:
+- Check the beacon's firing condition (consent gate `isTrackingAllowed()`, etc.) — no consent means no collection.
+- Whether the endpoint was committed/deployed (`git log -- <file>`).
+- Whether there's genuinely no traffic (new user) — in this case, solve it with an **empty-state design** (not a tracking problem).
 
 ---
 
-## 6. 신규 데이터가 필요하면 → 계약부터 정의
+## 5. Don't "Invent" Time-Series or Rate-of-Change From Nonexistent Data
 
-지표 하나가 기존 API에 없으면(예: 좋아요 합계), **엔드포인트 계약(JSON)부터 확정**하고 구현을 위임한다.
+- Some metrics have a daily time series (visitors `daily[]`); some don't (likes).
+- For metrics without a time series, **disable the graph tab** or expose only "total + change." **No fake flat graphs** (honesty).
+- Rate of change = sum for this period vs. sum for the immediately preceding equal period. If data exists for only one side, omit the rate of change.
+
+---
+
+## 6. If New Data Is Needed → Define the Contract First
+
+If a metric is missing from the existing API (e.g., likes total), **settle the endpoint contract (JSON) first**, then delegate the implementation.
 ```
-GET /api/analytics/likes-summary?days=N  (소유자 인증)
+GET /api/<resource>/likes-summary?days=N  (owner-authenticated)
 → { "total": 342, "current": 57, "previous": 41 }
-  total=전 기간, current=최근 N일, previous=그 앞 N일(변화율용)
+  total=all time, current=last N days, previous=the N days before that (for rate of change)
 ```
-계약이 있으면 프론트/백엔드를 병렬로 진행할 수 있다.
+With a contract in place, frontend and backend can proceed in parallel.

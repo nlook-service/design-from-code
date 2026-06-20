@@ -8,7 +8,7 @@ The final (v5) deliverable for issue #976 — "add a brand-status card to the mo
 
 It shows three phones side by side, which is exactly how the skill presents a UI change:
 
-- **AS-IS** — the current bar, reproduced from the real `MobileBrandStudioBar.tsx` (metrics buried at the bottom of the full menu).
+- **AS-IS** — the current bar, reproduced from the real `MobileBottomBar.tsx` (metrics buried at the bottom of the full menu).
 - **TO-BE** — the proposal. The nav bar stays pinned on top (**keep**), the brand-status card sits directly beneath it (**new**, green outline), and the visitors tile gets a 14-day sparkline (**changed**, yellow outline).
 - **EMPTY · new user** — the data-zero state, treated as a first-class screen with a clear call to action.
 

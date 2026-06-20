@@ -1,106 +1,106 @@
-# 복붙용 프롬프트 템플릿 (Prompt Templates)
+# Copy-Paste Prompt Templates
 
-> 각 단계에서 그대로 복사해 `{중괄호}`만 바꿔 쓴다. AI에게 업무 지시할 때 이 문구를 그대로 전달해도 된다.
+> Copy each step as-is and just swap out the `{curly_braces}`. You can hand these prompts directly to an AI when assigning it work.
 
 ---
 
-## [1] 이슈 읽기 (직접 Bash)
+## [1] Read the issue (direct Bash)
 
 ```bash
-gh issue view {번호} --repo {owner}/{repo} --json title,body,state,labels,comments,url
+gh issue view {number} --repo {owner}/{repo} --json title,body,state,labels,comments,url
 ```
-→ 본문이 모호하면 **사용자 의도를 한 문장으로 재진술**하고 시작.
+→ If the body is ambiguous, **restate the user's intent in one sentence** before starting.
 
 ---
 
-## [2] 코드 지도화 — Explore 에이전트
+## [2] Map the code — Explore agent
 
 ```
-{경로}에서 {기능}이 현재 어떻게 구현됐는지 지도화하라.
-파일 경로 + 줄번호 + 짧은 코드 발췌로 보고:
-1. {화면/컴포넌트}가 지금 무엇을 렌더하는가 (상태/슬롯/구조)
-2. {데이터}는 어떤 훅/쿼리/엔드포인트로 오는가, 응답 필드 형태는?
-3. 재사용 가능한 {차트/카드/공용} 컴포넌트 — 이름·props
-4. {브랜딩/프로필} 등 부수 데이터 훅
-전체 덤프 말고 구조화된 맵으로 반환하라.
-```
-
----
-
-## [3] 데이터 검증 — Explore 에이전트 (백엔드)
-
-```
-{엔드포인트}가 어떻게 계산·스코프되는지 끝까지 추적하라.
-라우터→핸들러(인증/스코프)→유즈케이스(필터)→리포지토리(WHERE 절)→스키마(컬럼/귀속).
-핵심 질문에 명시적으로 답하라:
-- 누구 기준으로 스코프되나? (userId? username? 전역?)
-- 무엇을 포함/제외하나? (봇 제외? 본인 제외? 공개만?)
-- 합산 범위는? (프로필만? 글 포함? 전부?)
-- 시계열/변화율을 만들 데이터가 이미 있나? (daily[] 같은 필드)
-파일+줄번호+WHERE절 발췌로 구조화해 반환하라.
+Map how {feature} is currently implemented in {path}.
+Report with file path + line number + a short code excerpt:
+1. What does {screen/component} render right now (state/slots/structure)?
+2. Where does {data} come from — which hook/query/endpoint, and what shape are the response fields?
+3. Reusable {chart/card/shared} components — names and props
+4. Side data hooks such as {branding/profile}
+Return a structured map, not a full dump.
 ```
 
 ---
 
-## [4] HTML 시안 — 작업 원칙 (자신에게 거는 지시)
+## [3] Verify the data — Explore agent (backend)
 
 ```
-자가완결 HTML 1개를 만든다:
-- 폰 프레임 안에 상태별(예: 접힘/펼침) 나란히
-- 레이아웃 2~3안 비교, 각 안 아래 근거 2줄
-- 인라인 CSS/SVG만, 차트 라이브러리 0
-- 숫자 tabular-nums, 강조는 색이 아니라 크기·굵기(테마 모노톤 보존)
-- 빈/초기 상태(데이터 0)도 1급으로 포함
-Write로 .html 생성 → SendUserFile로 전달.
-```
-
----
-
-## [6] AS-IS/TO-BE 충실 재현 — 작업 원칙
-
-```
-1. 실제 컴포넌트 JSX를 sed로 정독해 렌더 함수(renderXxx)·Tailwind 클래스·라벨·아이콘 크기를 추출.
-2. 추출한 그대로 HTML/CSS로 1:1 번역(라벨 지어내기 금지, 활성=색 아닌 굵기 등 코드 충실).
-3. AS-IS(현재 그대로) | TO-BE(바뀌는 부분만 교체) 2열.
-4. 🟦유지/🟩신규/🟨변경 색태그로 안 건드리는 부분 명시.
-5. 배치 제약은 위→아래 스택 다이어그램으로도 합의.
+Trace end to end how {endpoint} is computed and scoped.
+router → handler (auth/scope) → use case (filters) → repository (WHERE clause) → schema (columns/ownership).
+Answer the key questions explicitly:
+- Who is it scoped by? (userId? username? global?)
+- What is included/excluded? (bots excluded? self excluded? public only?)
+- What is the aggregation range? (profile only? including posts? everything?)
+- Is there already data to build a time series / rate of change? (fields like daily[])
+Return it structured with file + line number + WHERE-clause excerpts.
 ```
 
 ---
 
-## [7] 설계문서 .md — 목차
+## [4] HTML mockup — working principles (instruction to yourself)
 
 ```
-docs/02-design/{이슈}-design.md 에 작성:
-1. 배경/의도 (이슈 1줄 + 사용자 의도)
-2. 레이아웃 결정 (확정 시안 파일명 + ASCII 구조도)
-3. 데이터 모델 (검증 완료 — 정의·출처·스코프 표)
-4. 구현 착수점 (백엔드/프론트 파일·함수·라우트 + 신규 API 계약 JSON)
-5. 단계 P1/P2/P3
-6. 원칙/리스크 (성능·무수정 보장·정직성)
-```
-
----
-
-## [8] 구현 위임 — 언어 전문 에이전트
-
-```
-{엔드포인트/기능} 신규 추가하라.
-계약: {메서드·경로·응답 JSON}.
-데이터 모델: {확인된 테이블·컬럼·귀속}.
-기존 {유사 기능}의 핸들러/유즈케이스/리포지토리/dto 패턴을 그대로 따르라.
-라우트 등록은 기존 {유사 라우트} 옆에. 에러 wrap(fmt.Errorf), context 전달.
-검증 필수(결과 보고): {빌드 명령} + {테스트 명령}, 단위테스트 1개 추가.
-변경/추가 파일 목록 + 엔드포인트 경로 + 응답 필드를 요약 반환하라.
+Build a single self-contained HTML file:
+- States side by side inside a phone frame (e.g., collapsed/expanded)
+- Compare 2–3 layout options, with 2 lines of rationale under each
+- Inline CSS/SVG only, zero chart libraries
+- Numbers in tabular-nums; emphasize with size/weight, not color (preserve the monotone theme)
+- Include empty/initial states (zero data) as first-class too
+Generate the .html with Write → deliver it with SendUserFile.
 ```
 
 ---
 
-## 확정 질문 (사용자에게, 1개씩)
+## [6] Faithful AS-IS/TO-BE reproduction — working principles
 
 ```
-- 레이아웃: A안({요약}) vs B안({요약}) — 어느 방향이 끌리시나요?
-- 기간: "이번 주(7일)" 고정 vs 오늘/주/월 토글?
-- 변화율 색: 모노톤(▲ 굵기) vs 상승=초록/하락=빨강?
-- 배치: {신규}를 {기존}의 위/아래 어디에?
+1. Read the actual component JSX with sed and extract the render functions (renderXxx), Tailwind classes, labels, and icon sizes.
+2. Translate exactly what you extracted into HTML/CSS 1:1 (do not invent labels; stay faithful to the code, e.g., active = weight, not color).
+3. Two columns: AS-IS (exactly as it is now) | TO-BE (swap in only the parts that change).
+4. Mark what you are not touching with color tags: 🟦keep / 🟩new / 🟨changed.
+5. Also agree on placement constraints via a top→bottom stack diagram.
+```
+
+---
+
+## [7] Design doc .md — table of contents
+
+```
+Write to docs/02-design/{issue}-design.md:
+1. Background/intent (one-line issue + user intent)
+2. Layout decision (finalized mockup filename + ASCII structure diagram)
+3. Data model (verified — table of definitions, sources, scope)
+4. Implementation entry points (backend/frontend files, functions, routes + new API contract JSON)
+5. Phases P1/P2/P3
+6. Principles/risks (performance, no-modification guarantee, honesty)
+```
+
+---
+
+## [8] Delegate implementation — language-specialist agent
+
+```
+Add {endpoint/feature} as new.
+Contract: {method, path, response JSON}.
+Data model: {confirmed tables, columns, ownership}.
+Follow the handler/use case/repository/dto pattern of the existing {similar feature} exactly.
+Register the route next to the existing {similar route}. Wrap errors (fmt.Errorf) and pass context.
+Verification required (report results): {build command} + {test command}, and add one unit test.
+Return a summary of changed/added files + endpoint path + response fields.
+```
+
+---
+
+## Decision questions (to the user, one at a time)
+
+```
+- Layout: Option A ({summary}) vs Option B ({summary}) — which direction appeals to you?
+- Time range: fixed "this week (7 days)" vs a today/week/month toggle?
+- Rate-of-change color: monotone (▲ weight) vs up=green / down=red?
+- Placement: above or below the existing {existing} should {new} go?
 ```

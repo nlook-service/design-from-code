@@ -1,62 +1,62 @@
 ---
 name: design-from-code
-description: 이슈/요구사항 하나를 "실제 코드·데이터 검증 → 충실한 HTML 시안 반복 → 설계문서(.md) → 구현 위임" 순서로 만드는 워크플로우 스킬. 기존 UI를 건드리는 변경을 설계할 때, 상상이 아니라 실제 컴포넌트 소스와 데이터 모델을 읽어 시안을 만든다. 트리거: "설계해줘", "시안 만들어줘", "이 기능 어떻게 보여줄지", "기존 화면에 ~ 추가".
+description: Workflow skill that turns one issue/requirement into a design in the order "verify real code & data → iterate faithful HTML mockups → design doc (.md) → delegate implementation." When designing a change to existing UI, it reads the actual component source and data model instead of imagining them, and reproduces the current screen pixel-for-pixel. Triggers (EN) "design this", "make a mockup", "how should this feature look", "add ~ to the existing screen"; (KO) "설계해줘", "시안 만들어줘", "이 기능 어떻게 보여줄지", "기존 화면에 ~ 추가".
 ---
 
-# design-from-code — 코드 기반 설계 시안 스킬
+# design-from-code — design mockups grounded in real source
 
-> 한 줄: **코드로 사실을 확정 → HTML로 합의 → .md로 못 박기 → 위임으로 구현.**
-> 핵심 차별점: 시안을 *상상*으로 그리지 않고, **실제 컴포넌트 JSX와 데이터 쿼리를 읽어** 픽셀·숫자 단위로 재현한다.
+> One line: **lock facts with code → agree via HTML → nail it in a `.md` → ship by delegating.**
+> The key difference: mockups are not *imagined*. They are reproduced down to the pixel and the number by **reading the real component JSX and data queries.**
 
-## 언제 쓰나 (When to use)
+## When to use
 
-- 기존 화면/컴포넌트에 **무언가를 추가·변경**하는 설계 (예: "하단바에 지표 카드 추가")
-- "잘 안 보인다 / 이렇게 보여줬으면" 같은 **UI 재배치·강조** 요구
-- 데이터(숫자·통계)를 화면에 노출하는데 **그 숫자가 정확히 뭘 세는지 확정**이 필요할 때
-- 사용자가 "시안 먼저 / HTML로 보여줘"라고 할 때
+- Designing a change that **adds or modifies something** in an existing screen/component (e.g. "add a metrics card to the bottom bar")
+- **UI re-layout / emphasis** requests like "it's hard to see / I want it shown like this"
+- Exposing data (numbers, stats) on screen when you need to **pin down exactly what each number counts**
+- When the user says "mockup first / show me in HTML"
 
-## 언제 안 쓰나
+## When NOT to use
 
-- 순수 백엔드/CLI 작업, UI 없는 변경
-- 이미 합의된 단순 버그 수정(시안 불필요)
+- Pure backend/CLI work, changes with no UI
+- A simple, already-agreed bug fix (no mockup needed)
 
-## 핵심 원칙 (다른 모든 결정에 우선)
+## Core principles (these override every other decision)
 
-1. **추측 금지, 코드를 읽어라.** "이 통계가 어떻게 동작하지?"는 상상하면 100% 틀린다. 핸들러→쿼리→스키마를 끝까지 추적해 *사실*로 확정한 뒤 설계한다. → `references/data-model-verification.md`
-2. **실제 컴포넌트를 충실히 재현하라.** 새 시안 전에 **현재(AS-IS)를 실제 JSX 그대로** 그린다. 스키매틱 그림은 오해를 부른다. → `references/code-fidelity-reproduction.md` (★이 스킬의 심장)
-3. **글보다 그림.** 자가완결 HTML로 눈으로 보고 고친다. 피드백마다 v2·v3… 버전을 올린다. → `references/html-mockup-recipe.md`
-4. **한 번에 한 결정만 확정.** "A vs B?" → "기간 7일?" → "색 모노톤?" 좁게 묻는다.
-5. **유지/신규/변경을 명시.** "기존 그대로"가 요구면 🟦유지/🟩신규/🟨변경 색태그로 무엇을 안 건드리는지 보인다.
-6. **빈/초기 상태를 1급으로.** 데이터 0(신규 사용자)일 때 화면을 반드시 같이 설계한다.
-7. **구현은 위임, 검증은 필수.** 빌드/타입체크/테스트로 닫는다.
+1. **No guessing — read the code.** "How does this stat work?" is wrong ~100% of the time if you imagine it. Trace handler→query→schema all the way down, confirm it as *fact*, then design. → `references/data-model-verification.md`
+2. **Reproduce the real component faithfully.** Before any new mockup, draw the **current state (AS-IS) exactly as the real JSX renders it**. Schematic drawings cause misunderstandings. → `references/code-fidelity-reproduction.md` (★ the heart of this skill)
+3. **Pictures over prose.** Iterate with self-contained HTML you can see and fix. Bump the version (v2, v3…) on every round of feedback. → `references/html-mockup-recipe.md`
+4. **Confirm one decision at a time.** "A vs B?" → "7-day window?" → "monotone color?" — ask narrowly.
+5. **Mark keep / new / changed.** When "leave the rest as-is" is a requirement, use 🟦keep / 🟩new / 🟨changed color tags to show what you are *not* touching.
+6. **Empty / initial state is first-class.** Always design the data-zero (new user) screen alongside the populated one.
+7. **Delegate the build, but verification is mandatory.** Close it out with build / type-check / tests.
 
-## 8단계 워크플로우
+## The 8-step workflow
 
-| # | 단계 | 핵심 툴 | 상세 |
-|---|------|--------|------|
-| 1 | 이슈 원문 읽기 | `Bash` + `gh issue view` | WebFetch로 GitHub 열지 말 것(인증 실패) |
-| 2 | 코드 지도화 | `Agent(Explore)` ×N | 관련 컴포넌트/훅/스키마를 결론만 받아 매핑 |
-| 3 | **데이터 검증** | `Bash`(grep/sed) + Explore | 핸들러→유즈케이스→리포지토리→스키마. `references/data-model-verification.md` |
-| 4 | HTML 시안 v1 | `Write`(.html) + `SendUserFile` | 폰 프레임·2~3안·상태별·인라인 SVG. `references/html-mockup-recipe.md` |
-| 5 | 사용자 확인 | 응답 / `AskUserQuestion` | 1개씩 확정, 피드백마다 v2·v3 |
-| 6 | **AS-IS/TO-BE 충실 재현** | `Bash`(sed로 JSX 정독) + `Write` | 실제 렌더 함수·클래스·라벨 추출→HTML. `references/code-fidelity-reproduction.md` |
-| 7 | 설계문서 .md | `Write` | 확정 시안+검증 데이터모델+구현 착수점+단계 |
-| 8 | 구현 위임+검증 | `Agent(언어 전문)` + 직접 | 계약·검증명령 박아 위임, 빌드/테스트로 닫기 |
+| # | Step | Key tools | Detail |
+|---|------|-----------|--------|
+| 1 | Read the issue verbatim | `Bash` + `gh issue view` | Don't open GitHub via WebFetch (auth fails) |
+| 2 | Map the code | `Agent(Explore)` ×N | Get just the conclusions for related components/hooks/schema |
+| 3 | **Verify the data** | `Bash` (grep/sed) + Explore | handler→use-case→repository→schema. `references/data-model-verification.md` |
+| 4 | HTML mockup v1 | `Write` (.html) + `SendUserFile` | Phone frame, 2–3 options, per-state, inline SVG. `references/html-mockup-recipe.md` |
+| 5 | User confirmation | reply / `AskUserQuestion` | Confirm one at a time; v2, v3 per feedback |
+| 6 | **Faithful AS-IS/TO-BE** | `Bash` (read JSX with sed) + `Write` | Extract real render fns/classes/labels → HTML. `references/code-fidelity-reproduction.md` |
+| 7 | Design doc `.md` | `Write` | Approved mockup + verified data model + build entry points + phases |
+| 8 | Delegate + verify | `Agent` (language expert) + direct | Delegate with the contract & verify commands baked in; close with build/tests |
 
-## 참조 파일
+## Reference files
 
-- `references/code-fidelity-reproduction.md` — **★실제 컴포넌트를 sed로 읽어 HTML로 1:1 재현하는 구체 기법** (renderSeg 워크드 예시)
-- `references/data-model-verification.md` — 데이터 모델 끝까지 추적하는 법 (analytics username 귀속 예시)
-- `references/html-mockup-recipe.md` — 자가완결 HTML 작성 레시피 (폰 프레임·인라인 SVG 차트·디자인 토큰·빈 상태)
-- `references/prompt-templates.md` — 단계별 복붙용 프롬프트
-- `examples/issue-976-walkthrough.md` — 이번 실제 사례 전체 흐름 (v1→v5, 사용자가 "위/아래 거꾸로다" 정정한 지점 포함)
+- `references/code-fidelity-reproduction.md` — **★ concrete technique for reading the real component with sed and reproducing it 1:1 in HTML** (worked `renderSeg` example)
+- `references/data-model-verification.md` — how to trace the data model all the way down (events-table username-attribution example)
+- `references/html-mockup-recipe.md` — recipe for self-contained HTML (phone frame, inline-SVG charts, design tokens, empty state)
+- `references/prompt-templates.md` — copy-paste prompts for each step
+- `examples/issue-976-walkthrough.md` — the full flow of a real case (v1→v5, including the point where the user corrected "top/bottom is reversed")
 
-## 자주 하는 실수 (체크리스트)
+## Common mistakes (checklist)
 
-- [ ] 데이터 동작을 **추측**으로 적었다 → 코드로 확정했나?
-- [ ] 시안이 **스키매틱**이라 실제와 다르다 → 실제 JSX 읽고 클래스·라벨까지 재현했나?
-- [ ] 한 번에 여러 결정을 물어 혼란 → 1개씩 확정했나?
-- [ ] "기존 유지" 요구인데 무엇을 안 바꾸는지 안 보임 → 유지/신규/변경 태그 달았나?
-- [ ] 빈/초기 상태(데이터 0)를 빠뜨림 → 빈 상태 디자인 넣었나?
-- [ ] 그래프에 차트 라이브러리 도입 → 인라인 SVG로 했나?
-- [ ] 구현 후 빌드/타입체크 안 돌림 → 검증 명령으로 닫았나?
+- [ ] Wrote data behavior from a **guess** → did you confirm it in code?
+- [ ] Mockup is **schematic** so it differs from reality → did you read the real JSX and reproduce classes & labels?
+- [ ] Asked several decisions at once and caused confusion → did you confirm one at a time?
+- [ ] "Keep existing" was the requirement but it's unclear what stays untouched → did you add keep/new/changed tags?
+- [ ] Forgot the empty / initial state (data-zero) → did you include the empty-state design?
+- [ ] Pulled in a chart library for the graph → did you use inline SVG instead?
+- [ ] Skipped build/type-check after implementing → did you close it out with verification commands?

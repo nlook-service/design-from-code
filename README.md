@@ -1,6 +1,10 @@
+<div align="center">
+
 # design-from-code
 
-> **Verify facts in code → agree on HTML → lock it in a `.md` → delegate the build.**
+### Verify facts in code → agree on HTML → lock it in a `.md` → delegate the build.
+
+A workflow **skill** for **Claude Code** and **OpenAI Codex** that designs changes to existing UI from the **real source** — not from imagination.
 
 <p>
   <a href="https://nlook.me"><img alt="Made by nlook" src="https://img.shields.io/badge/made%20by-nlook.me-0a0a0b"></a>
@@ -9,13 +13,15 @@
   <img alt="Codex skill" src="https://img.shields.io/badge/Codex-skill-fcd34d">
 </p>
 
-A workflow **skill** for Claude Code (and OpenAI Codex CLI) that designs changes to existing UI from the **real source** — not from imagination. Before drawing anything, it reads the actual component JSX and traces the data model in code, then reproduces the current screen pixel-for-pixel and iterates self-contained HTML mockups until you approve. The result is a design doc grounded in facts, ready to hand to an implementer.
+<img src="examples/images/mobile-bottom-brand-status-v5.png" alt="Example output — faithful AS-IS / TO-BE / empty-state mobile mockups produced by the skill" width="900">
 
-> Built and maintained by the team behind **[nlook.me](https://nlook.me)** — a publishing platform where writers ship documents and watch readership grow. The worked example below is a real nlook feature.
+<sub><b>Actual output of the skill</b> (issue #976): the current bar reproduced from <code>MobileBottomBar.tsx</code> (AS-IS), the proposed change (TO-BE — <b>green = new / yellow = changed</b>), and the data-zero empty state — all as one self-contained HTML file, zero dependencies.</sub>
 
-![Example output — faithful AS-IS / TO-BE / empty-state mobile mockups produced by the skill](examples/images/mobile-bottom-brand-status-v5.png)
+</div>
 
-*Actual output of the skill (issue #976): the current bar reproduced from `MobileBrandStudioBar.tsx` (AS-IS), the proposed change (TO-BE, green = new / yellow = changed), and the data-zero empty state — all as one self-contained HTML file, zero dependencies.*
+Before drawing anything, it reads the actual component JSX and traces the data model in code, then reproduces the current screen pixel-for-pixel and iterates self-contained HTML mockups until you approve. The result is a design doc grounded in facts, ready to hand to an implementer.
+
+> Built and maintained by the team behind **[nlook.me](https://nlook.me)** — a publishing platform where writers ship documents and watch readership grow. The worked example here is a real nlook feature.
 
 ---
 
@@ -43,20 +49,20 @@ This repo is both a **Claude Code plugin** and a plain **skill folder**. Pick on
 From inside Claude Code:
 
 ```
-/plugin marketplace add nlook/design-from-code
+/plugin marketplace add nlook-service/design-from-code
 /plugin install design-from-code@design-from-code
 ```
 
 The first command registers this repo as a marketplace; the second installs the bundled skill. Restart the session and the `design-from-code` skill is available.
 
-> Replace `nlook/design-from-code` with your fork's `owner/repo` if you forked it.
+> Replace `nlook-service/design-from-code` with your fork's `owner/repo` if you forked it.
 
 ### Option B — Manual skill install (Claude Code **or** Codex)
 
 Both tools read the same `SKILL.md` format and load skills from a `skills/` directory.
 
 ```bash
-git clone https://github.com/nlook/design-from-code.git
+git clone https://github.com/nlook-service/design-from-code.git
 cd design-from-code
 
 # Claude Code (user-wide)
