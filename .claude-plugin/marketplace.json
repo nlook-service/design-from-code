@@ -1,0 +1,22 @@
+{
+  "name": "design-from-code",
+  "owner": {
+    "name": "csk6124",
+    "url": "https://github.com/csk6124"
+  },
+  "metadata": {
+    "description": "A Claude Code marketplace hosting the design-from-code skill.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "design-from-code",
+      "source": "./",
+      "description": "Design UI changes from real source code: verify data in code, iterate faithful HTML mockups, lock a design doc, delegate implementation.",
+      "version": "1.0.0",
+      "author": {
+        "name": "csk6124"
+      }
+    }
+  ]
+}

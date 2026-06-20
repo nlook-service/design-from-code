@@ -1,0 +1,18 @@
+{
+  "name": "design-from-code",
+  "version": "1.0.0",
+  "description": "Workflow skill that designs UI changes from real source code and data models — verify data in code, iterate faithful HTML mockups, lock a design doc, then delegate implementation. It reproduces existing components pixel-for-pixel by reading actual JSX/queries instead of imagining them.",
+  "author": {
+    "name": "csk6124"
+  },
+  "homepage": "https://github.com/csk6124/design-from-code",
+  "license": "MIT",
+  "keywords": [
+    "design",
+    "ui",
+    "mockup",
+    "workflow",
+    "html",
+    "skill"
+  ]
+}

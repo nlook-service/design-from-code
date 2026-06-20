@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Issue #976 · Mobile bottom brand status · v5</title>
+<style>
+  :root{
+    --background:#fff; --card:#fff; --muted:#f4f4f5;
+    --foreground:#0a0a0b; --muted-foreground:#71717a; --border:#e9e9ec;
+    --primary:#2563eb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#ececed;color:var(--foreground);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:28px 20px 44px}
+  .num{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  h1{font-size:19px;margin:0 0 4px}
+  .sub{color:var(--muted-foreground);font-size:13px;margin:0 0 18px}
+  .legend{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px}
+  .chip{font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;border:1px solid var(--border);background:#fff;display:flex;align-items:center;gap:6px}
+  .dot{width:9px;height:9px;border-radius:3px;display:inline-block}
+  .row{display:flex;gap:34px;align-items:flex-start;flex-wrap:wrap}
+  .col{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .tag{font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted-foreground)}
+  /* phone */
+  .phone{width:300px;aspect-ratio:300/640;background:var(--background);
+    border-radius:40px;border:1px solid var(--border);overflow:hidden;position:relative;
+    display:flex;flex-direction:column;box-shadow:0 12px 34px rgba(0,0,0,.10)}
+  .statusbar{height:30px;display:flex;justify-content:space-between;align-items:center;
+    padding:0 18px;font-size:11px;font-weight:700}
+  .canvas{flex:1;position:relative;background:repeating-linear-gradient(180deg,#fafafa 0 22px,#f4f4f5 22px 23px)}
+  .ph{position:absolute;left:16px;right:16px;border-radius:10px;background:rgba(113,113,122,.10)}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);
+    border-radius:24px 24px 0 0;border-top:1px solid var(--border);
+    box-shadow:0 -10px 34px -14px rgba(0,0,0,.22);padding:0 14px 14px}
+  .grip{height:6px;width:48px;border-radius:999px;background:rgba(113,113,122,.4);margin:9px auto 6px}
+  /* fixed nav (the bottom bar itself, pinned at very top of sheet) */
+  .nav{display:flex;justify-content:space-around;align-items:center;padding:8px 4px 12px;border-bottom:1px solid var(--border)}
+  .nav .ic{width:22px;height:22px;border-radius:7px;background:#ededee;display:flex;align-items:center;justify-content:center;color:#52525b;font-size:12px;font-weight:800}
+  .fab{width:42px;height:42px;border-radius:999px;background:var(--foreground);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+  /* brand status cards */
+  .status{padding:13px 4px 4px}
+  .stitle{font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--muted-foreground);margin:0 0 11px;display:flex;align-items:center;gap:7px}
+  .cards{display:flex;gap:10px}
+  .c{flex:1;background:var(--muted);border-radius:14px;padding:11px 8px;text-align:center}
+  .big{font-size:27px;font-weight:850;line-height:1}
+  .lab{font-size:10px;color:var(--muted-foreground);font-weight:700;margin-top:3px}
+  .chg{font-size:10px;font-weight:800;margin-top:5px}
+  .up{color:var(--foreground)} .flat{color:var(--muted-foreground)}
+  .spark{margin-top:9px}
+  /* highlight tags */
+  .hl-new{outline:2px solid #86efac;outline-offset:3px;border-radius:18px}
+  .hl-chg{outline:2px solid #fcd34d;outline-offset:3px;border-radius:14px}
+  /* empty state */
+  .empty{padding:18px 10px 8px;text-align:center}
+  .empty .big{font-size:26px;color:#a1a1aa}
+  .cta{margin-top:11px;display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--primary);padding:8px 16px;border-radius:999px}
+  .caption{font-size:11px;color:var(--muted-foreground);max-width:280px;text-align:center;line-height:1.5}
+</style></head>
+<body>
+  <h1>Issue #976 — Mobile bottom brand status</h1>
+  <p class="sub">v5 · faithful AS-IS / TO-BE reproduced from <code>MobileBrandStudioBar.tsx</code></p>
+
+  <div class="legend">
+    <span class="chip"><span class="dot" style="background:#d4d4d8"></span>Keep (untouched)</span>
+    <span class="chip"><span class="dot" style="background:#86efac"></span>New</span>
+    <span class="chip"><span class="dot" style="background:#fcd34d"></span>Changed</span>
+  </div>
+
+  <div class="row">
+
+    <!-- AS-IS -->
+    <div class="col">
+      <div class="tag">AS-IS</div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="canvas">
+          <div class="ph" style="top:14px;height:40px"></div>
+          <div class="ph" style="top:64px;height:120px"></div>
+          <div class="ph" style="top:194px;height:120px"></div>
+          <div class="sheet" style="height:150px">
+            <div class="grip"></div>
+            <div class="nav">
+              <div class="ic">▤</div><div class="ic">◷</div>
+              <div class="fab">＋</div>
+              <div class="ic">▦</div><div class="ic">☰</div>
+            </div>
+            <div style="padding:14px 6px;color:var(--muted-foreground);font-size:11.5px;text-align:center">
+              brand metrics buried at the very bottom of the full menu
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption">Numbers exist but live under the calendar / recent posts — invisible on a phone.</p>
+    </div>
+
+    <!-- TO-BE -->
+    <div class="col">
+      <div class="tag">TO-BE</div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="canvas">
+          <div class="ph" style="top:14px;height:40px"></div>
+          <div class="ph" style="top:64px;height:90px"></div>
+          <div class="sheet" style="height:288px">
+            <div class="grip"></div>
+            <!-- nav pinned at top: KEEP -->
+            <div class="nav">
+              <div class="ic">▤</div><div class="ic">◷</div>
+              <div class="fab">＋</div>
+              <div class="ic">▦</div><div class="ic">☰</div>
+            </div>
+            <!-- brand status: NEW, directly under nav -->
+            <div class="status hl-new">
+              <p class="stitle">◆ THIS WEEK</p>
+              <div class="cards">
+                <div class="c">
+                  <div class="num big">38</div>
+                  <div class="lab">Posts</div>
+                  <div class="chg up">▲ 6</div>
+                </div>
+                <div class="c hl-chg">
+                  <div class="num big">1,284</div>
+                  <div class="lab">Visitors</div>
+                  <div class="chg up">▲ 24%</div>
+                  <div class="spark">
+                    <svg viewBox="0 0 120 30" preserveAspectRatio="none" style="width:100%;height:26px">
+                      <polyline points="0,26 24,22 48,15 72,17 96,8 120,3"
+                        fill="none" stroke="#0a0a0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <circle cx="120" cy="3" r="2.6" fill="#0a0a0b"/>
+                    </svg>
+                  </div>
+                </div>
+                <div class="c">
+                  <div class="num big">96</div>
+                  <div class="lab">Likes</div>
+                  <div class="chg flat">— new API</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption">Menu stays pinned on top (KEEP). Brand status sits right beneath it (NEW); visitors sparkline = 14-day series (CHANGED days 1→14).</p>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div class="col">
+      <div class="tag">EMPTY · new user</div>
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="canvas">
+          <div class="ph" style="top:14px;height:40px"></div>
+          <div class="ph" style="top:64px;height:90px"></div>
+          <div class="sheet" style="height:250px">
+            <div class="grip"></div>
+            <div class="nav">
+              <div class="ic">▤</div><div class="ic">◷</div>
+              <div class="fab">＋</div>
+              <div class="ic">▦</div><div class="ic">☰</div>
+            </div>
+            <div class="status hl-new">
+              <p class="stitle">◆ THIS WEEK</p>
+              <div class="empty">
+                <div class="num big">0</div>
+                <div class="lab" style="margin-top:6px">No visitors yet</div>
+                <p class="caption" style="margin:9px auto 0">Publish your first post to start your weekly graph.</p>
+                <span class="cta">＋ Write a post</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption">Data-zero is a first-class screen, not an afterthought.</p>
+    </div>
+
+  </div>
+</body></html>
