@@ -74,10 +74,34 @@ ln -s "$PWD/skills/design-from-code" ~/.codex/skills/design-from-code
 
 Use `cp -r` instead of `ln -s` if you prefer a copy. For a single project only, symlink into that repo's `.claude/skills/` instead of the home directory.
 
-### Verify
+## Verify your install
 
-- **Claude Code:** start a new session, then run `/design-from-code`, or say *"design how to add X to this existing screen."*
-- **Codex:** confirm `design-from-code` appears in the session's skill list.
+Three quick levels — run the first one, do the others once.
+
+**1. Files & manifests are intact (one command):**
+
+```bash
+bash verify.sh
+```
+
+Expected: a list of `✓` checks ending in `PASS — N checks ok`. It validates the skill frontmatter, the name/folder match, bilingual triggers, every referenced file, the self-contained example, the plugin JSON, and (if installed) that the symlinks resolve. Exit code `0` on success, so you can wire it into CI.
+
+**2. It actually loads (fresh session):**
+
+- **Claude Code:** start a new session and type `/design-from-code`. It should appear and load. Running `/help` or the skill picker should list it with the English description.
+- **Codex:** start a session; `design-from-code` should be in the skill list.
+
+**3. It actually triggers and produces a mockup (the real test):**
+
+In a repo that has some UI, say:
+
+```
+Design how to add a "last updated" label to the existing card header. Mockup first.
+```
+
+You should see it (a) read the real component, (b) ask one narrow question, and (c) hand you a self-contained `.html` you can open in a browser. That round-trip — real source → HTML you can see — is the skill working end to end. Korean works too: try *"이 카드 헤더에 ~ 추가 설계해줘"*.
+
+> The example artifact is pre-rendered, so you can sanity-check the *output shape* before installing: open [`examples/mobile-bottom-brand-status-v5.html`](examples/mobile-bottom-brand-status-v5.html) in any browser.
 
 ## Usage
 
@@ -124,19 +148,38 @@ design-from-code/
 │   ├── mobile-bottom-brand-status-v5.html   # open in a browser
 │   └── images/
 │       └── mobile-bottom-brand-status-v5.png
+├── verify.sh                    # `bash verify.sh` → checks the install
 ├── README.md
 └── LICENSE
 ```
 
 ## Requirements
 
-- **Claude Code** ≥ 2.0 (plugin support) or any version with `~/.claude/skills`, **or** OpenAI **Codex CLI** with `~/.codex/skills`
-- `gh` CLI authenticated (`gh auth login`) — only when the input is a GitHub issue
-- Mockups are plain HTML; no build step, no chart library, no runtime
+| Need | Why | Required? |
+|------|-----|-----------|
+| **Claude Code** (with `~/.claude/skills` or plugin support) **or** **Codex CLI** (`~/.codex/skills`) | Host that loads the skill | Yes (one of) |
+| A **browser** | Open the HTML mockups | Yes |
+| An **existing codebase** to read | The skill reproduces real components & traces real data | Yes for full fidelity — see below |
+| `gh` CLI authenticated (`gh auth login`) | Only to read a GitHub **issue** as input | Optional |
+| `python3` | Deeper JSON check in `verify.sh` | Optional |
 
-## Notes on portability
+No build step, no chart library, no runtime — mockups are plain self-contained HTML.
 
-The workflow is tool-agnostic. On Claude Code it runs exactly as written. On Codex, tool names differ (`Agent(Explore)` → a sub-agent, `SendUserFile` → file output), and the steps map cleanly — the method does not depend on any single tool.
+## Where it fits — and where it degrades gracefully
+
+This skill's superpower is reading **real source and real data**. The author's case worked well because the code and the data were both there to read. If yours are different, here's exactly what happens — nothing breaks, but know the limits:
+
+| Your situation | What the skill does | Caveat |
+|----------------|---------------------|--------|
+| **Greenfield / brand-new screen** (no existing component) | Skips AS-IS reproduction; still does data-verify + fresh mockups | Step 6 (faithful AS-IS/TO-BE) has nothing to reproduce — it becomes a normal mockup |
+| **Non-React stack** (Vue, Svelte, SwiftUI, Flutter, plain HTML) | The "read the real component" method still applies — it reads *your* template/widget | The reference examples are written in JSX/Tailwind; the technique generalizes, the snippets are illustrative |
+| **Data is a black-box 3rd-party API** (you can't read the query/schema) | Falls back to verifying against the API's **docs/contract** instead of source | You can't pin the number to a schema column; confirm semantics from API docs |
+| **Requirement is plain text, not a GitHub issue** | Skips `gh`; reads the text directly | `gh`/auth not needed at all |
+| **Monorepo paths differ from the examples** | Paths like `app/src` are placeholders; it discovers yours | Don't copy example paths literally |
+| **Headless screenshots blocked** (CI, sandbox) | Source-reading is the primary path; screenshots are *optional* verification | `file://` is often blocked — serve over a local HTTP server, or just open the file |
+| **Codex instead of Claude Code** | Steps map cleanly: `Agent(Explore)` → a sub-agent, `SendUserFile` → file output | Tool names differ; the method is tool-agnostic |
+
+Rule of thumb: **the more real code and data you have, the better the output.** With neither, it still helps you think, but it can't reproduce what doesn't exist — and it won't pretend to.
 
 ## About nlook
 
